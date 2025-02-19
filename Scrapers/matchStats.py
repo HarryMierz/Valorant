@@ -10,7 +10,7 @@ def get_matches_url():
 
     matches_url = []
 
-    for match in soup.find_all('a', class_='wf-module-item match-item mod-color mod-bg-after-green'):
+    for match in soup.find_all('div', class_='wf-card'):
         matches_url.append('https://www.vlr.gg/' + match['href'])
 
     print('Obtained matches urls')
@@ -26,12 +26,16 @@ def get_player_stats(table, player_stats):
         agent_name = agent.find('img')['title'] if agent else 'Unknown'
         cols = row.find_all('td')
         cols = [ele.text.strip() for ele in cols]
+
         
         if len(cols) == 0:
             continue
         
         name_space_index = cols[0].find(" ")
         player_name = cols[0][:name_space_index]
+
+        team_name_index = cols[0].rfind("\t")
+        team_name = cols[0][team_name_index + 1:]
 
         acs = cols[3].split("\n")
         acs_all = acs[0]
@@ -78,7 +82,8 @@ def get_player_stats(table, player_stats):
         first_deaths_t = first_deaths[1]
         first_deaths_ct = first_deaths[2]
 
-        player_stats[player_name] = {'Agent': agent_name,
+        player_stats[player_name] = {'Team' : team_name,
+                                     'Agent': agent_name,
                                      'ACS': {'All': acs_all, 'T': acs_t, 'CT': acs_ct}, 
                                      'Elims': {'All': elims_all, 'T': elims_t, 'CT': elims_ct}, 
                                      'Deaths': {'All': deaths_all, 'T': deaths_t, 'CT': deaths_ct}, 
@@ -90,7 +95,7 @@ def get_player_stats(table, player_stats):
                                      'First Deaths': {'All': first_deaths_all, 'T': first_deaths_t, 'CT': first_deaths_ct}}
     return player_stats
 
-def get_match_stats(match_url):
+def get_match_stats(match_url,map_stats={}):
     
 
     time.sleep(1)
@@ -104,7 +109,9 @@ def get_match_stats(match_url):
     for map in soup.find_all('div', class_='vm-stats-gamesnav-item js-map-switch'):
         maps_urls.append('https://www.vlr.gg/' + map['data-href'])
 
-    for map_url in maps_urls:
+    for map_url in maps_urls[1:]:
+        print(map_url)
+        time.sleep(1)
         response = requests.get(map_url)
         soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -113,13 +120,34 @@ def get_match_stats(match_url):
         team1_ct_sc = team1.find('span', class_='mod-ct').text.strip()
         team1_t_sc = team1.find('span', class_='mod-t').text.strip()
 
+        try:
+            team1_ot_sc = team1.find('span', class_='mod-ot').text.strip()
+            team1_final_sc = str(int(team1_ct_sc) + int(team1_t_sc) + int(team1_ot_sc))
+        except:
+            team1_final_sc = str(int(team1_ct_sc) + int(team1_t_sc))
+            team1_ot_sc = 0
+
+
+        
+
         team2 = soup.find('div', class_='team mod-right')
         team2_name = team2.find('div', class_='team-name').text.strip()
         team2_ct_sc = team2.find('span', class_='mod-ct').text.strip()
-        team2_t_sc = team2.find('span', class_='mod-t').text.strip()   
+        team2_t_sc = team2.find('span', class_='mod-t').text.strip()
 
-        team_stats[team1_name] = {'CT': team1_ct_sc, 'T': team1_t_sc}
-        team_stats[team2_name] = {'CT': team2_ct_sc, 'T': team2_t_sc}
+        try:
+            team2_ot_sc = team2.find('span', class_='mod-ot').text.strip()
+            team2_final_sc = str(int(team2_ct_sc) + int(team2_t_sc) + int(team2_ot_sc))
+        except:
+            team2_final_sc = str(int(team2_ct_sc) + int(team2_t_sc))
+            team2_ot_sc = 0
+
+        team_stats[team1_name] = {'final': team1_final_sc,'CT': team1_ct_sc, 'T': team1_t_sc, 'OT': team1_ot_sc}
+        team_stats[team2_name] = {'final': team2_final_sc,'CT': team2_ct_sc, 'T': team2_t_sc, 'OT': team2_ot_sc}
+
+        map_raw = soup.find('div', class_='map').find_next('span').text.strip()
+        map_index = map_raw.find("\t")
+        map_name = map_raw[:map_index]
 
         player_stats = {}
 
@@ -131,17 +159,22 @@ def get_match_stats(match_url):
 
         player_stats = get_player_stats(next_table, player_stats)
 
-    print('finished match')
+        match_date = soup.find('div', class_='moment-tz-convert').text.strip()
 
-    return team_stats, player_stats
+        map_stats = {'Map': map_name, 'Team Stats': team_stats, 'Player Stats': player_stats}
+
+    return map_stats
 
 
 def main():
     matches_url = get_matches_url()
 
-    for match_url in matches_url[:2]:
-        team_stats, player_stats = get_match_stats(match_url)
-        print(team_stats.keys())
-        print(player_stats.keys())
+    for match_url in matches_url[:1]:
+        map_stats = get_match_stats(match_url)
+
+
 
 main()
+
+
+#Need match data object: date, maps, teams, scores
