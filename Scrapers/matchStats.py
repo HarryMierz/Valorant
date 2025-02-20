@@ -1,6 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+
 
 def get_matches_url():
 
@@ -11,12 +16,15 @@ def get_matches_url():
     matches_url = []
 
     for match in soup.find_all('div', class_='wf-card'):
-        matches_url.append('https://www.vlr.gg/' + match['href'])
+        #matches_url.append('https://www.vlr.gg/' + match['href'])
+        for a in match.find_all('a', href=True):
+            matches_url.append('https://www.vlr.gg' + a['href'])
 
     print('Obtained matches urls')
-    print('Total Matches: ', len(matches_url))
+    print('Total Matches: ', len(matches_url[2:]))
 
-    return matches_url
+
+    return matches_url[2:]
 
 def get_player_stats(table, player_stats):
     rows = table.find_all('tr')
@@ -59,8 +67,12 @@ def get_player_stats(table, player_stats):
 
         kast = cols[8].split("\n")
         kast_all = kast[0]
-        kast_t = kast[1]
-        kast_ct = kast[2]
+        try:
+            kast_t = kast[1]
+            kast_ct = kast[2]
+        except:
+            kast_t = None
+            kast_ct = None
 
         adr = cols[9].split("\n")
         adr_all = adr[0]
@@ -95,6 +107,8 @@ def get_player_stats(table, player_stats):
                                      'First Deaths': {'All': first_deaths_all, 'T': first_deaths_t, 'CT': first_deaths_ct}}
     return player_stats
 
+
+
 def get_match_stats(match_url,map_stats={}):
     
 
@@ -106,10 +120,15 @@ def get_match_stats(match_url,map_stats={}):
 
     team_stats = {}
 
-    for map in soup.find_all('div', class_='vm-stats-gamesnav-item js-map-switch'):
-        maps_urls.append('https://www.vlr.gg/' + map['data-href'])
+    match_stats = {}
 
-    for map_url in maps_urls[1:]:
+    for map in soup.find_all('div', class_='vm-stats-gamesnav-item js-map-switch'):
+        game_id = map['data-game-id']
+        maps_urls.append('https://www.vlr.gg' + map['data-href'][:-6] + f'?game={game_id}&tab=overview')
+
+    print(maps_urls)
+
+    for map_url in maps_urls:
         print(map_url)
         time.sleep(1)
         response = requests.get(map_url)
@@ -148,7 +167,7 @@ def get_match_stats(match_url,map_stats={}):
         map_raw = soup.find('div', class_='map').find_next('span').text.strip()
         map_index = map_raw.find("\t")
         map_name = map_raw[:map_index]
-
+        print(map_name)
         player_stats = {}
 
         table = soup.find('table')
@@ -161,16 +180,21 @@ def get_match_stats(match_url,map_stats={}):
 
         match_date = soup.find('div', class_='moment-tz-convert').text.strip()
 
-        map_stats = {'Map': map_name, 'Team Stats': team_stats, 'Player Stats': player_stats}
+        map_stats = {'Team Stats': team_stats, 'Player Stats': player_stats}
 
-    return map_stats
+        match_stats[map_name] = map_stats
+
+    return match_stats
 
 
 def main():
     matches_url = get_matches_url()
+    print(matches_url[:1])
 
     for match_url in matches_url[:1]:
-        map_stats = get_match_stats(match_url)
+        match_stats = get_match_stats(match_url)
+        print(match_stats.keys())
+    
 
 
 
