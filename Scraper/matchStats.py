@@ -3,9 +3,54 @@ from bs4 import BeautifulSoup
 import time
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.safari.options import Options
 import json
+import datetime as dt
+
+def format_date(date):
+    date = date.strip()
+    formated_date = dt.datetime.strptime(date, '%a, %B %d, %Y')
+
+    return str(formated_date.date())
+
+def get_matches_and_dates():
+
+    url = 'https://www.vlr.gg/matches/results'
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    matches_dates_dict = {}
+
+    dates = soup.find('div', class_='wf-label mod-large')
+    dates_list = dates.text.strip().split("\n")
+    date = format_date(dates_list[0][:-1])
+    urls = soup.find('div', class_='wf-card')
+    urls = urls.find_next('div', class_='wf-card')
+
+    max_count = len(range(len(soup.find_all('div', class_='wf-card')) - 1))
+
+    count = 0
+
+    for match in range(max_count):
+
+        count += 1
+
+        urls_list = []
+
+        for a in urls.find_all('a'):
+            urls_list.append('https://www.vlr.gg' + a['href'])
+
+        matches_dates_dict[date] = urls_list
+
+        if count == max_count:
+            continue
+        else:
+            dates = dates.find_next('div', class_='wf-label mod-large')
+            dates_list = dates.text.strip().split("\n")
+            date = format_date(dates_list[0])
+            urls = urls.find_next('div', class_='wf-card')
+
+    return matches_dates_dict
 
 
 def get_matches_url():
@@ -22,16 +67,13 @@ def get_matches_url():
 
     print('Obtained matches urls')
     print('Total Matches: ', len(matches_url[2:]))
+    print('-----------------')
 
 
     return matches_url[2:]
 
-def get_stats(cols):
-    pass
-
-def get_player_stats1(table, player_stats={}):
-
-    #for i in tables:
+def get_player_stats(table, player_stats={}):
+        
         rows = table.find_elements(By.TAG_NAME, 'tr')
         for row in rows:
             agent_span = row.find_element(By.TAG_NAME, 'span')
@@ -134,7 +176,7 @@ def get_player_stats1(table, player_stats={}):
 
 
 
-def get_match_stats(match_url):
+def get_match_stats(match_url, date):
 
     match_stats = {}
 
@@ -158,10 +200,9 @@ def get_match_stats(match_url):
     round = event_stat_list[3][round_index:][1:]
 
     event_stats['Event'] = event
+    event_stats['Date'] = date
     event_stats['Stage'] = stage
     event_stats['Round'] = round
-
-    maps = []
 
     map_list = soup.find_all('div', class_='vm-stats-gamesnav-item js-map-switch')
 
@@ -215,7 +256,7 @@ def get_match_stats(match_url):
 
         tables = team_active.find_elements(By.CLASS_NAME,'wf-table-inset.mod-overview')
         
-        player_stats = get_player_stats1(tables[0])
+        player_stats = get_player_stats(tables[0])
 
         match_stats[map_name] = {'Team Stats: ' : team_stats.copy(),'Player Stats' : player_stats.copy()}
 
@@ -224,25 +265,21 @@ def get_match_stats(match_url):
     match_stats_final[f'{team1_name} vs {team2_name}'] = [event_stats, match_stats]
 
     match = f'{team1_name}_vs_{team2_name}'
+    match = match.replace(" ", "_")
 
     print(match)
+    print('-----------------')
 
     return match_stats_final, match
 
-
 def main():
-    matches_url = get_matches_url()
-    print(matches_url[:1])
 
-    for match_url in matches_url[:3]:
-        match_stats = get_match_stats(match_url)
-        with open('match_stats.json', 'w') as f:
-            json.dump(match_stats, f)
-    
+    matches_and_dates = get_matches_and_dates()
 
+    for key, value in matches_and_dates.items():
+        for match in value:
+            match_stats , match = get_match_stats(match, key)
+            with open(f'{match}.json', 'w') as f:
+                json.dump(match_stats, f)
 
-
-match_stats, match = get_match_stats('https://www.vlr.gg/448600/drx-vs-sentinels-champions-tour-2025-masters-bangkok-r1')
-
-with open(f'{match}.json', 'w') as f:
-    json.dump(match_stats, f)
+main()
