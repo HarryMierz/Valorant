@@ -110,11 +110,12 @@ def get_player_stats(table, player_stats={}):
             elims_ct = elims[2][elims_ct_index + 1:]
 
             deaths = cols[5].split("\n")
-            deaths_all = deaths[0]
-            deaths_t_index = deaths[1].rfind("\t")
-            deaths_t = deaths[1][deaths_t_index + 1:]
-            deaths_ct_index = deaths[2].rfind("\t")
-            deaths_ct = deaths[2][deaths_ct_index + 1:]
+            deaths_all_index = deaths[2].rfind("\t")
+            deaths_all = deaths[2][deaths_all_index + 1]
+            deaths_t_index = deaths[3].rfind("\t")
+            deaths_t = deaths[3][deaths_t_index + 1:]
+            deaths_ct_index = deaths[4].rfind("\t")
+            deaths_ct = deaths[4][deaths_ct_index + 1:]
 
             assists = cols[6].split("\n")
             assists_all = assists[0]
@@ -256,13 +257,20 @@ def get_match_stats(match_url, date):
 
         tables = team_active.find_elements(By.CLASS_NAME,'wf-table-inset.mod-overview')
         
-        player_stats = get_player_stats(tables[0])
+        player_stats1 = get_player_stats(tables[0])
+        player_stats2 = get_player_stats(tables[1])
 
-        match_stats[map_name] = {'Team Stats: ' : team_stats.copy(),'Player Stats' : player_stats.copy()}
+        player_stats1.update(player_stats2)
+
+
+
+        match_stats[map_name] = {'Team Stats: ' : team_stats.copy(),'Player Stats' : player_stats1.copy()}
 
         driver.quit()
 
-    match_stats_final[f'{team1_name} vs {team2_name}'] = [event_stats, match_stats]
+    team_names = str(team1_name).replace(" ", "_") + "_vs_" + str(team2_name).replace(" ", "_")
+
+    match_stats_final[team_names] = [event_stats, match_stats]
 
     match = f'{team1_name}_vs_{team2_name}'
     match = match.replace(" ", "_")
@@ -279,7 +287,7 @@ def main():
     for key, value in matches_and_dates.items():
         for match in value:
             match_stats , match = get_match_stats(match, key)
-            with open(f'{match}.json', 'w') as f:
+            with open(f'../data/{match}.json', 'w') as f:
                 json.dump(match_stats, f)
 
 main()
