@@ -125,11 +125,20 @@ def get_player_stats(table, player_stats={}):
             assists_ct = assists[2][assists_ct_index + 1:]
 
             kast = cols[8].split("\n")
-            kast_all = kast[0]
-            kast_t_index = kast[1].rfind("\t")
-            kast_t = kast[1][kast_t_index + 1:]
-            kast_ct_index = kast[2].rfind("\t")
-            kast_ct = kast[2][kast_ct_index + 1:]
+            try:
+                kast_all = kast[0]
+            except:
+                kast_all = None
+            try:
+                kast_t_index = kast[1].rfind("\t")
+                kast_t = kast[1][kast_t_index + 1:]
+            except:
+                kast_t = None
+            try:
+                kast_ct_index = kast[2].rfind("\t")
+                kast_ct = kast[2][kast_ct_index + 1:]
+            except:
+                kast_ct = None
 
             adr = cols[9].split("\n")
             adr_all = adr[0]
