@@ -33,6 +33,7 @@ MANIFEST
 *.spec
 
 .DS_Store
+db_config.yml
 
 # Installer logs
 pip-log.txt
