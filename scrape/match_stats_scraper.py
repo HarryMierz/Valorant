@@ -289,7 +289,7 @@ def get_match_stats(match_url, date):
 
     return match_stats_final, match
 
-def main():
+def scraper():
 
     matches_and_dates = get_matches_and_dates()
 
@@ -299,4 +299,4 @@ def main():
             with open(f'../data/{match}.json', 'w') as f:
                 json.dump(match_stats, f)
 
-main()
+scraper()
