@@ -209,8 +209,10 @@ def get_agg_player_data(map_list, team_name_abbr_dict, data, match_name):
     map_player_stats_df_pd_trim['kast_attack'] = map_player_stats_df_pd_trim['kast_attack'].str.replace('%', '').astype(float)
     map_player_stats_df_pd_trim['headshot_percentage_overall'] = map_player_stats_df_pd_trim['headshot_percentage_overall'].str.replace('%', '').astype(float)
     map_player_stats_df_pd_trim['headshot_percentage_defense'] = map_player_stats_df_pd_trim['headshot_percentage_defense'].str.replace('%', '').astype(float)
-    map_player_stats_df_pd_trim['headshot_percentage_attack'] = map_player_stats_df_pd_trim['headshot_percentage_attack'].str.replace('%', '').astype(float)
-
+    try:
+        map_player_stats_df_pd_trim['headshot_percentage_attack'] = map_player_stats_df_pd_trim['headshot_percentage_attack'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['headshot_percentage_attack'] = None
     map_player_stats_df_pd_trim = map_player_stats_df_pd_trim.astype({'acs_overall': 'int', 'acs_attack': 'int', 'acs_defense':  'int', 'kills_overall' : 'int', 'kills_attack': 'int', 'kills_defense': 'int', 'deaths_overall' : 'int', 'deaths_attack': 'int', 'deaths_defense': 'int', 'assists_overall' : 'int', 'assists_attack': 'int', 'assists_defense': 'int', 'kast_overall' : 'float', 'kast_attack':  'float', 'kast_defense':  'float', 'adr_overall' :  'int', 'adr_attack':  'int', 'adr_defense':  'int', 'headshot_percentage_overall' :  'float', 'headshot_percentage_attack':  'float', 'headshot_percentage_defense':  'float', 'first_kills_overall' : 'int', 'first_kills_attack': 'int', 'first_kills_defense': 'int', 'first_deaths_overall' : 'int', 'first_deaths_attack': 'int', 'first_deaths_defense': 'int'})
 
     agg_player_stats_df_pd = map_player_stats_df_pd_trim.groupby('player_name').agg({'acs_overall': 'mean', 'acs_attack': 'mean', 'acs_defense':  'mean', 'kills_overall' : 'sum', 'kills_attack': 'sum', 'kills_defense': 'sum', 'deaths_overall' : 'sum', 'deaths_attack': 'sum', 'deaths_defense': 'sum', 'assists_overall' : 'sum', 'assists_attack': 'sum', 'assists_defense': 'sum', 'kast_overall' : 'mean', 'kast_attack':  'mean', 'kast_defense':  'mean', 'adr_overall' :  'mean', 'adr_attack':  'mean', 'adr_defense':  'mean', 'headshot_percentage_overall' :  'mean', 'headshot_percentage_attack':  'mean', 'headshot_percentage_defense':  'mean', 'first_kills_overall' : 'sum', 'first_kills_attack': 'sum', 'first_kills_defense': 'sum', 'first_deaths_overall' : 'sum', 'first_deaths_attack': 'sum', 'first_deaths_defense': 'sum'}).round(2)
@@ -324,22 +326,25 @@ def transform_match_data():
     #delete_files(files_list)
 
     return match_data_dict
-        
 
-match_data_dict = transform_match_data()
-print('map')
-match_data_dict['map'][0].show(2)
-print('team')
-match_data_dict['team'][0].show(2)
-print('player')
-match_data_dict['player'][0].show(2)
-print('match')
-match_data_dict['match'][0].show(2)
-print('match_team')
-match_data_dict['match_team'][0].show(2)
-print('match_player')
-match_data_dict['match_player'][0].show(1)
-print('match_map_team')
-match_data_dict['match_map_team'][0].show(2)
-print('match_map_player')
-match_data_dict['match_map_player'][0].show(1)
+if __name__ == 'main':
+    transform_match_data()
+     
+
+#match_data_dict = transform_match_data()
+#print('map')
+#match_data_dict['map'][0].show(2)
+#print('team')
+#match_data_dict['team'][0].show(2)
+#print('player')
+#match_data_dict['player'][0].show(2)
+#print('match')
+#match_data_dict['match'][0].show(2)
+#print('match_team')
+#match_data_dict['match_team'][0].show(2)
+#print('match_player')
+#match_data_dict['match_player'][0].show(1)
+#print('match_map_team')
+#match_data_dict['match_map_team'][0].show(2)
+#print('match_map_player')
+#match_data_dict['match_map_player'][0].show(1)
