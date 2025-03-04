@@ -1,9 +1,16 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, StringType
+from pyspark.sql.functions import lit
 import json
 import pandas as pd
 import glob
 import os
+import numpy as np
+import sys
+sys.path.insert(1, '../scrape')
+import match_stats_scraper
+
+
 
 spark = spark = SparkSession.builder \
     .appName("pyspark_test") \
@@ -43,7 +50,7 @@ def get_map_list(data, match_name):
 # Function that gets team stats for each map in the match
 def get_team_map_data(match_name, map_list, data, team1_name, team2_name):
 
-    map_team_stats_df = pd.DataFrame(columns = ['map', 'team_name', 'win' ,'final_score', 'defense_score' ,'attack_score', 'overtime_score'])
+    map_team_stats_df = pd.DataFrame(columns = ['map_name', 'team_name', 'win' ,'final_score', 'defense_score' ,'attack_score', 'overtime_score'])
 
     for i in map_list:
 
@@ -63,8 +70,8 @@ def get_team_map_data(match_name, map_list, data, team1_name, team2_name):
             team2_win = True
 
 
-        team1_dict = {'map' : [i], 'team_name' : [team1_name], 'win' : [team1_win], 'final_score' : [team1_stats['final']], 'defense_score' : [team1_stats['CT']], 'attack_score' : [team1_stats['T']], 'overtime_score' : [team1_stats['OT']]}
-        team2_dict = {'map' : [i], 'team_name' : [team2_name], 'win' : [team2_win], 'final_score' : [team2_stats['final']], 'defense_score' : [team2_stats['CT']], 'attack_score' : [team2_stats['T']], 'overtime_score' : [team2_stats['OT']]}
+        team1_dict = {'map_name' : [i], 'team_name' : [team1_name], 'win' : [team1_win], 'final_score' : [team1_stats['final']], 'defense_score' : [team1_stats['CT']], 'attack_score' : [team1_stats['T']], 'overtime_score' : [team1_stats['OT']]}
+        team2_dict = {'map_name' : [i], 'team_name' : [team2_name], 'win' : [team2_win], 'final_score' : [team2_stats['final']], 'defense_score' : [team2_stats['CT']], 'attack_score' : [team2_stats['T']], 'overtime_score' : [team2_stats['OT']]}
 
         team1_df = pd.DataFrame(team1_dict)
         team2_df = pd.DataFrame(team2_dict)
@@ -166,7 +173,7 @@ def get_match_event_stats(team1_name, team2_name, winner, data, map_list):
 # Function that gets player stats for each map in the match
 def get_map_player_data(map_list, team_name_abbr_dict, data, match_name):
 
-    map_player_stats_df_pd = pd.DataFrame(columns=['map', 'player_name', 'agent', 'team_name', 'acs_overall','acs_attack', 'acs_defense', 'kills_overall', 'kills_attack', 'kills_defense',  'deaths_overall', 'deaths_attack', 'deaths_defense', 'assists_overall', 'assists_attack', 'assists_defense', 'kast_overall', 'kast_attack', 'kast_defense', 'adr_overall', 'adr_attack', 'adr_defense', 'headshot_percentage_overall', 'headshot_percentage_attack', 'headshot_percentage_defense', 'first_kills_overall', 'first_kills_attack', 'first_kills_defense', 'first_deaths_overall', 'first_deaths_attack', 'first_deaths_defense'])
+    map_player_stats_df_pd = pd.DataFrame(columns=['map_name', 'player_name', 'agent', 'team_name', 'acs_overall','acs_attack', 'acs_defense', 'kills_overall', 'kills_attack', 'kills_defense',  'deaths_overall', 'deaths_attack', 'deaths_defense', 'assists_overall', 'assists_attack', 'assists_defense', 'kast_overall', 'kast_attack', 'kast_defense', 'adr_overall', 'adr_attack', 'adr_defense', 'headshot_percentage_overall', 'headshot_percentage_attack', 'headshot_percentage_defense', 'first_kills_overall', 'first_kills_attack', 'first_kills_defense', 'first_deaths_overall', 'first_deaths_attack', 'first_deaths_defense'])
 
     for i in map_list:
         map_name = i
@@ -177,9 +184,34 @@ def get_map_player_data(map_list, team_name_abbr_dict, data, match_name):
             player_name = player
             player_stats = map_player_stats[player]
 
-            temp_df3 = pd.DataFrame({'map' : map_name,'player_name': player_name, 'agent': player_stats['Agent'], 'team_name' : team_name_abbr_dict[player_stats['Team']], 'acs_overall': player_stats['ACS']['All'], 'acs_attack':player_stats['ACS']['T'], 'acs_defense': player_stats['ACS']['CT'], 'kills_overall' : player_stats['Elims']['All'], 'kills_attack': player_stats['Elims']['T'], 'kills_defense': player_stats['Elims']['CT'], 'deaths_overall' : player_stats['Deaths']['All'], 'deaths_attack': player_stats['Deaths']['T'], 'deaths_defense': player_stats['Deaths']['CT'], 'assists_overall' : player_stats['Assists']['All'], 'assists_attack': player_stats['Assists']['T'], 'assists_defense': player_stats['Assists']['CT'], 'kast_overall' :player_stats['KAST']['All'], 'kast_attack': player_stats['KAST']['T'], 'kast_defense': player_stats['KAST']['CT'], 'adr_overall' : player_stats['ADR']['All'], 'adr_attack': player_stats['ADR']['T'], 'adr_defense': player_stats['ADR']['CT'], 'headshot_percentage_overall' : player_stats['HS_percentage']['All'], 'headshot_percentage_attack': player_stats['HS_percentage']['T'], 'headshot_percentage_defense': player_stats['HS_percentage']['CT'], 'first_kills_overall' : player_stats['First Kills']['All'], 'first_kills_attack': player_stats['First Kills']['T'], 'first_kills_defense': player_stats['First Kills']['CT'], 'first_deaths_overall' : player_stats['First Deaths']['All'], 'first_deaths_attack': player_stats['First Deaths']['T'], 'first_deaths_defense': player_stats['First Deaths']['CT']}, index=[0])
+            temp_df3 = pd.DataFrame({'map_name' : map_name,'player_name': player_name, 'agent': player_stats['Agent'], 'team_name' : team_name_abbr_dict[player_stats['Team']], 'acs_overall': player_stats['ACS']['All'], 'acs_attack':player_stats['ACS']['T'], 'acs_defense': player_stats['ACS']['CT'], 'kills_overall' : player_stats['Elims']['All'], 'kills_attack': player_stats['Elims']['T'], 'kills_defense': player_stats['Elims']['CT'], 'deaths_overall' : player_stats['Deaths']['All'], 'deaths_attack': player_stats['Deaths']['T'], 'deaths_defense': player_stats['Deaths']['CT'], 'assists_overall' : player_stats['Assists']['All'], 'assists_attack': player_stats['Assists']['T'], 'assists_defense': player_stats['Assists']['CT'], 'kast_overall' :player_stats['KAST']['All'], 'kast_attack': player_stats['KAST']['T'], 'kast_defense': player_stats['KAST']['CT'], 'adr_overall' : player_stats['ADR']['All'], 'adr_attack': player_stats['ADR']['T'], 'adr_defense': player_stats['ADR']['CT'], 'headshot_percentage_overall' : player_stats['HS_percentage']['All'], 'headshot_percentage_attack': player_stats['HS_percentage']['T'], 'headshot_percentage_defense': player_stats['HS_percentage']['CT'], 'first_kills_overall' : player_stats['First Kills']['All'], 'first_kills_attack': player_stats['First Kills']['T'], 'first_kills_defense': player_stats['First Kills']['CT'], 'first_deaths_overall' : player_stats['First Deaths']['All'], 'first_deaths_attack': player_stats['First Deaths']['T'], 'first_deaths_defense': player_stats['First Deaths']['CT']}, index=[0])
 
             map_player_stats_df_pd = pd.concat([map_player_stats_df_pd, temp_df3], ignore_index=True)
+
+    try:
+        map_player_stats_df_pd['kast_overall'] = map_player_stats_df_pd['kast_overall'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['kast_overall'] = np.nan
+    try:
+        map_player_stats_df_pd['kast_defense'] = map_player_stats_df_pd['kast_defense'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['kast_defense'] = np.nan
+    try:
+        map_player_stats_df_pd['kast_attack'] = map_player_stats_df_pd['kast_attack'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['kast_attack'] = np.nan
+    try:
+        map_player_stats_df_pd['headshot_percentage_overall'] = map_player_stats_df_pd['headshot_percentage_overall'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['headshot_percentage_overall'] = np.nan
+    try:
+        map_player_stats_df_pd['headshot_percentage_defense'] = map_player_stats_df_pd['headshot_percentage_defense'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['headshot_percentage_defense'] = np.nan
+    try:
+        map_player_stats_df_pd['headshot_percentage_attack'] = map_player_stats_df_pd['headshot_percentage_attack'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd['headshot_percentage_attack'] = np.nan
 
     return map_player_stats_df_pd
 
@@ -204,15 +236,30 @@ def get_agg_player_data(map_list, team_name_abbr_dict, data, match_name):
 
     map_player_stats_df_pd_trim = map_player_stats_df_pd.copy()
 
-    map_player_stats_df_pd_trim['kast_overall'] = map_player_stats_df_pd_trim['kast_overall'].str.replace('%', '').astype(float)
-    map_player_stats_df_pd_trim['kast_defense'] = map_player_stats_df_pd_trim['kast_defense'].str.replace('%', '').astype(float)
-    map_player_stats_df_pd_trim['kast_attack'] = map_player_stats_df_pd_trim['kast_attack'].str.replace('%', '').astype(float)
-    map_player_stats_df_pd_trim['headshot_percentage_overall'] = map_player_stats_df_pd_trim['headshot_percentage_overall'].str.replace('%', '').astype(float)
-    map_player_stats_df_pd_trim['headshot_percentage_defense'] = map_player_stats_df_pd_trim['headshot_percentage_defense'].str.replace('%', '').astype(float)
+    try:
+        map_player_stats_df_pd_trim['kast_overall'] = map_player_stats_df_pd_trim['kast_overall'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['kast_overall'] = np.nan
+    try:
+        map_player_stats_df_pd_trim['kast_defense'] = map_player_stats_df_pd_trim['kast_defense'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['kast_defense'] = np.nan
+    try:
+        map_player_stats_df_pd_trim['kast_attack'] = map_player_stats_df_pd_trim['kast_attack'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['kast_attack'] = np.nan
+    try:
+        map_player_stats_df_pd_trim['headshot_percentage_overall'] = map_player_stats_df_pd_trim['headshot_percentage_overall'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['headshot_percentage_overall'] = np.nan
+    try:
+        map_player_stats_df_pd_trim['headshot_percentage_defense'] = map_player_stats_df_pd_trim['headshot_percentage_defense'].str.replace('%', '').astype(float)
+    except:
+        map_player_stats_df_pd_trim['headshot_percentage_defense'] = np.nan
     try:
         map_player_stats_df_pd_trim['headshot_percentage_attack'] = map_player_stats_df_pd_trim['headshot_percentage_attack'].str.replace('%', '').astype(float)
     except:
-        map_player_stats_df_pd_trim['headshot_percentage_attack'] = None
+        map_player_stats_df_pd_trim['headshot_percentage_attack'] = np.nan
     map_player_stats_df_pd_trim = map_player_stats_df_pd_trim.astype({'acs_overall': 'int', 'acs_attack': 'int', 'acs_defense':  'int', 'kills_overall' : 'int', 'kills_attack': 'int', 'kills_defense': 'int', 'deaths_overall' : 'int', 'deaths_attack': 'int', 'deaths_defense': 'int', 'assists_overall' : 'int', 'assists_attack': 'int', 'assists_defense': 'int', 'kast_overall' : 'float', 'kast_attack':  'float', 'kast_defense':  'float', 'adr_overall' :  'int', 'adr_attack':  'int', 'adr_defense':  'int', 'headshot_percentage_overall' :  'float', 'headshot_percentage_attack':  'float', 'headshot_percentage_defense':  'float', 'first_kills_overall' : 'int', 'first_kills_attack': 'int', 'first_kills_defense': 'int', 'first_deaths_overall' : 'int', 'first_deaths_attack': 'int', 'first_deaths_defense': 'int'})
 
     agg_player_stats_df_pd = map_player_stats_df_pd_trim.groupby('player_name').agg({'acs_overall': 'mean', 'acs_attack': 'mean', 'acs_defense':  'mean', 'kills_overall' : 'sum', 'kills_attack': 'sum', 'kills_defense': 'sum', 'deaths_overall' : 'sum', 'deaths_attack': 'sum', 'deaths_defense': 'sum', 'assists_overall' : 'sum', 'assists_attack': 'sum', 'assists_defense': 'sum', 'kast_overall' : 'mean', 'kast_attack':  'mean', 'kast_defense':  'mean', 'adr_overall' :  'mean', 'adr_attack':  'mean', 'adr_defense':  'mean', 'headshot_percentage_overall' :  'mean', 'headshot_percentage_attack':  'mean', 'headshot_percentage_defense':  'mean', 'first_kills_overall' : 'sum', 'first_kills_attack': 'sum', 'first_kills_defense': 'sum', 'first_deaths_overall' : 'sum', 'first_deaths_attack': 'sum', 'first_deaths_defense': 'sum'}).round(2)
@@ -274,7 +321,8 @@ def get_map_info(map_list):
 
 def transform_match_data():
 
-    files_list = get_json_file_name_list()
+    #files_list = get_json_file_name_list()
+    json_files = match_stats_scraper.scraper()
 
     map_team_stats_df_list = []
     match_event_info_df_list = []
@@ -285,7 +333,7 @@ def transform_match_data():
     player_info_df_list = []
     map_df_list = []
 
-    for file in files_list:
+    for file in json_files:
         data = load_file(file)
 
         match_name, team1_name, team2_name = get_match_info(data)
@@ -300,11 +348,15 @@ def transform_match_data():
 
         match_event_info_df_list.append(get_match_event_stats(team1_name, team2_name, winner, data, map_list))
 
-        map_player_stats_df_list.append(spark.createDataFrame(get_map_player_data(map_list, team_name_abbr_dict, data, match_name)))
+        map_player_stats_df = spark.createDataFrame(get_map_player_data(map_list, team_name_abbr_dict, data, match_name))
+        map_player_stats_df = map_player_stats_df.replace(float('nan'), None)
+        map_player_stats_df_list.append(map_player_stats_df)
 
         team_match_agg_stats_df_list.append(spark.createDataFrame(get_agg_team_data(match_name, map_list, data, team1_name, team2_name)))
 
-        agg_player_stats_df_list.append(spark.createDataFrame(get_agg_player_data(map_list, team_name_abbr_dict, data, match_name)))
+        agg_player_stats_df = spark.createDataFrame(get_agg_player_data(map_list, team_name_abbr_dict, data, match_name))
+        agg_player_stats_df = agg_player_stats_df.replace(float('nan'), None)
+        agg_player_stats_df_list.append(agg_player_stats_df)
 
         team_info_df_list.append(spark.createDataFrame(get_team_info(match_name, map_list, data, team1_name, team2_name)))
 
@@ -324,6 +376,7 @@ def transform_match_data():
     }
 
     #delete_files(files_list)
+    
 
     return match_data_dict
 
