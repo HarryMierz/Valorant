@@ -8,7 +8,9 @@ import json
 import datetime as dt
 
 def format_date(date):
+    
     date = date.strip()
+    
     formated_date = dt.datetime.strptime(date, '%a, %B %d, %Y')
 
     return str(formated_date.date())
@@ -29,7 +31,8 @@ def get_matches_and_dates(url):
 
     dates = soup.find('div', class_='wf-label mod-large')
     dates_list = dates.text.strip().split("\n")
-    date = format_date(dates_list[0][:-1])
+    #date = format_date(dates_list[0][:-1])
+    date = format_date(dates_list[0])
     urls = soup.find('div', class_='wf-card')
     urls = urls.find_next('div', class_='wf-card')
 

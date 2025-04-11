@@ -57,3 +57,4 @@ wcwidth
 websocket-client
 wsproto
 zipp
+SQLAlchemy

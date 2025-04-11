@@ -172,7 +172,7 @@ def get_match_event_stats(team1_name, team2_name, winner, data, map_list):
 
 # Function that gets player stats for each map in the match
 def get_map_player_data(map_list, team_name_abbr_dict, data, match_name):
-
+    
     map_player_stats_df_pd = pd.DataFrame(columns=['map_name', 'player_name', 'agent', 'team_name', 'acs_overall','acs_attack', 'acs_defense', 'kills_overall', 'kills_attack', 'kills_defense',  'deaths_overall', 'deaths_attack', 'deaths_defense', 'assists_overall', 'assists_attack', 'assists_defense', 'kast_overall', 'kast_attack', 'kast_defense', 'adr_overall', 'adr_attack', 'adr_defense', 'headshot_percentage_overall', 'headshot_percentage_attack', 'headshot_percentage_defense', 'first_kills_overall', 'first_kills_attack', 'first_kills_defense', 'first_deaths_overall', 'first_deaths_attack', 'first_deaths_defense'])
 
     for i in map_list:
@@ -183,6 +183,7 @@ def get_map_player_data(map_list, team_name_abbr_dict, data, match_name):
         for player in map_player_stats:
             player_name = player
             player_stats = map_player_stats[player]
+            
 
             try:
                 temp_df3 = pd.DataFrame({'map_name' : map_name,'player_name': player_name, 'agent': player_stats['Agent'], 'team_name' : team_name_abbr_dict[player_stats['Team']], 'acs_overall': player_stats['ACS']['All'], 'acs_attack':player_stats['ACS']['T'], 'acs_defense': player_stats['ACS']['CT'], 'kills_overall' : player_stats['Elims']['All'], 'kills_attack': player_stats['Elims']['T'], 'kills_defense': player_stats['Elims']['CT'], 'deaths_overall' : player_stats['Deaths']['All'], 'deaths_attack': player_stats['Deaths']['T'], 'deaths_defense': player_stats['Deaths']['CT'], 'assists_overall' : player_stats['Assists']['All'], 'assists_attack': player_stats['Assists']['T'], 'assists_defense': player_stats['Assists']['CT'], 'kast_overall' :player_stats['KAST']['All'], 'kast_attack': player_stats['KAST']['T'], 'kast_defense': player_stats['KAST']['CT'], 'adr_overall' : player_stats['ADR']['All'], 'adr_attack': player_stats['ADR']['T'], 'adr_defense': player_stats['ADR']['CT'], 'headshot_percentage_overall' : player_stats['HS_percentage']['All'], 'headshot_percentage_attack': player_stats['HS_percentage']['T'], 'headshot_percentage_defense': player_stats['HS_percentage']['CT'], 'first_kills_overall' : player_stats['First Kills']['All'], 'first_kills_attack': player_stats['First Kills']['T'], 'first_kills_defense': player_stats['First Kills']['CT'], 'first_deaths_overall' : player_stats['First Deaths']['All'], 'first_deaths_attack': player_stats['First Deaths']['T'], 'first_deaths_defense': player_stats['First Deaths']['CT']}, index=[0])
