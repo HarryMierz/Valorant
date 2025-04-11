@@ -13,9 +13,6 @@ def format_date(date):
 
     return str(formated_date.date())
 
-def get_match_check_data():
-    pass
-
 def get_matches_and_dates(url):
 
     try:
@@ -308,14 +305,7 @@ def get_match_stats(match_url, date):
         safari_options.add_argument("--headless")
         driver = webdriver.Safari(options=safari_options)
 
-        try:
-            driver.get(map_url)
-
-        except:
-            #driver.back()
-            driver.quit()
-        # continue so we can return to beginning of loop
-            continue
+        driver.get(map_url)
 
         team_active = driver.find_element(By.CLASS_NAME,'vm-stats-game.mod-active')
 
@@ -361,11 +351,7 @@ def get_match_stats(match_url, date):
 
         match_stats[map_name] = {'Team Stats: ' : team_stats.copy(),'Player Stats' : player_stats1.copy()}
 
-        driver.close()
         driver.quit()
-
-
-
 
     try:
         team_names = str(team1_name).replace(" ", "_") + "_vs_" + str(team2_name).replace(" ", "_")
@@ -376,6 +362,9 @@ def get_match_stats(match_url, date):
 
     match = f'{team1_name}_vs_{team2_name}'
     match = match.replace(" ", "_")
+
+    print(match)
+    print('-----------------')
 
     return match_stats_final, match
 
@@ -406,3 +395,4 @@ def scraper():
                         json_list.append(match_stats)
             
             time.sleep(2)
+scraper()
